@@ -15,7 +15,7 @@ DOMAIN="example.com"  # Replace the `example.com` to your own domain.
 docker run -d -p 8000:80 --name ddns -e CF_ZONE="${DOMAIN}" chowrex/dsm7-ddns:latest
 ```
 
-When you're done, you can use `http://IP:8000?record=__HOSTNAME__&value=__MYIP__&password=__PASSWORD__`
+When you're done, you can use `http://IP:8000/update?record=__HOSTNAME__&value=__MYIP__&password=__PASSWORD__`
 as your DSM DDNS provider's query URL.
 
 For more details, read:
