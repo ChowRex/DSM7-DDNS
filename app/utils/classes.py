@@ -8,7 +8,7 @@ Store all the classes using for this project
 - Copyright: Copyright © 2022 Rex Zhou. All rights reserved.
 """
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 __author__ = "Rex Zhou"
 __copyright__ = "Copyright © 2022 Rex Zhou. All rights reserved."
@@ -39,8 +39,6 @@ class APIBasic(abc.ABC):
     END_POINT = ''
     # The seconds for requests timeout
     TIME_OUT = int(os.environ.get("TIME_OUT", 20))
-    # The latest value of record
-    LATEST_VALUE = '127.0.0.1'
 
     def help(self) -> dict:
         """
@@ -84,19 +82,6 @@ class APIBasic(abc.ABC):
             return ''
         except socket.gaierror:
             return 'badresolv'
-
-    def check_changed(self, value: str) -> str:
-        """
-        Check if the record's value has been changed
-
-        :param value: The record value
-        :type value: str
-        :return: If changed, return `nochg` key string else return ''
-        :rtype: str
-        """
-        if self.LATEST_VALUE == value:
-            return 'nochg'
-        return ''
 
     def update_record(  # pylint: disable=no-self-use
         self,  # pylint: disable=too-many-arguments
@@ -231,12 +216,10 @@ class CloudFlare(APIBasic):
             return result
         return '911'
 
-    def _pre_check(self, record: str, value: str):
+    def _pre_check(self, record: str):
         if result := self.check_end_point():
             return result
         if result := self.check_fqdn(record):
-            return result
-        if result := self.check_changed(value):
             return result
         return ''
 
@@ -271,7 +254,7 @@ class CloudFlare(APIBasic):
 
     def update_record(self, record: str, value: str, username: str,
                       password: str) -> str:
-        if result := self._pre_check(record, value):
+        if result := self._pre_check(record):
             logger.warning('Pre check error: %s', result)
             return result
         logger.info('Arguments check passed.')
@@ -291,7 +274,5 @@ class CloudFlare(APIBasic):
         link = self.UPDATE_LINK.format(self.zone_id, record_id)
         url = parse.urljoin(self.END_POINT, link)
         result = self._put_request(url, record, value)
-        if result == 'good':
-            self.LATEST_VALUE = value  # pylint: disable=invalid-name
         logger.info('Update successful.')
         return result

@@ -8,7 +8,7 @@ Main entry point to using CloudFlare
 - Copyright: Copyright © 2022 Rex Zhou. All rights reserved.
 """
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 __author__ = "Rex Zhou"
 __copyright__ = "Copyright © 2022 Rex Zhou. All rights reserved."
@@ -31,6 +31,7 @@ logging.basicConfig(level=level)
 logger.info('Log level: %s', level)
 app = FastAPI()
 supports = {'cloudflare': classes.CloudFlare()}
+LATEST_VALUE = ''
 
 
 # Why use GET method?
@@ -39,7 +40,6 @@ supports = {'cloudflare': classes.CloudFlare()}
 # https://www.pubyun.com/wiki/%E5%B8%AE%E5%8A%A9:api
 # https://www.noip.com/integrate/request
 @app.get("/update")
-@app.post("/update")
 async def update(record: str = None,
                  value: str = None,
                  username: str = None,
@@ -80,8 +80,12 @@ async def update(record: str = None,
     }
     if not all(kwargs.values()):
         return PlainTextResponse('nohost')
+    global LATEST_VALUE # pylint: disable=global-statement
+    if LATEST_VALUE == value:
+        return PlainTextResponse('nochg')
     cli = supports[provider]
     result = cli.update_record(**kwargs)
+    LATEST_VALUE = value if result == 'good' else ''
     return PlainTextResponse(result)
 
 
